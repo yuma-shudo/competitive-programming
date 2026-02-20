@@ -1,0 +1,15 @@
+name: Log Solution
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Count solutions
+        run: |
+          count=$(find AtCoder -name "main.py" | wc -l)
+          echo "🎉 Total solutions: $count"

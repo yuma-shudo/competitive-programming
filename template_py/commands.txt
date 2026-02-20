@@ -1,0 +1,10 @@
+# 1. 問題ページのURLをそのままペースト
+./new_problem.sh https://atcoder.jp/contests/abc390/tasks/abc390_a
+
+# 2. サンプルをin1.txt〜in3.txt / out1.txt〜out3.txtに貼る
+
+# 3. コードを書いてテスト
+./run.sh AtCoder/2025-02-20/abc390_a
+
+# 4. ACしたらコミット → GitHubに草が生える
+git add . && git commit -m "AC: abc390_a" && git push
