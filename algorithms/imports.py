@@ -17,106 +17,9 @@ iterator = iter(data)
 # s = next(iterator)
 # a = [int(next(iterator)) for _ in range(n)]
 
-def bfs(start_y, start_x, H, W, grid):
-    """幅優先探索で到達可能なマスを探索"""
-    visited = [[False] * W for _ in range(H)]
-    q = deque()
-    q.append((start_y, start_x))
-    visited[start_y][start_x] = True
-
-    # 上下左右の移動方向
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-
-    while q:
-        y, x = q.popleft()
-        for dy, dx in directions:
-            ny, nx = y + dy, x + dx
-            
-            # 範囲内かチェック
-            if 0 <= ny < H and 0 <= nx < W:
-                # 未訪問かつ壁でないなら進む
-                if not visited[ny][nx] and grid[ny][nx] != "#":
-                    visited[ny][nx] = True
-                    q.append((ny, nx))
-    return visited
-def solve():
-    # 1. 入力をすべて読み込み、空白/改行区切りでリスト化
-    data = input().split()
-    iterator = iter(data)
-
-    try:
-        # 2. イテレータから順番に取り出す
-        H = int(next(iterator))
-        W = int(next(iterator))
-        
-        # グリッドの読み込み
-        # next(iterator) は1行分の文字列 ("....#") を返します
-        # list() で囲むことで [' .', '.', '.', '.', '#'] のように文字配列化し、変更可能にします
-        grid = [list(next(iterator)) for _ in range(H)]
-
-    except StopIteration:
-        return
-
-    # --- メイン処理 ---
-    
-    # スタート地点 (0, 0) と仮定（問題に応じて変更してください）
-    start_y, start_x = 0, 0
-
-    # スタート地点が壁でないか確認（念の為）
-    if grid[start_y][start_x] == "#":
-        # スタート不可の場合、全てFalseの配列を用意するだけ
-        visited = [[False] * W for _ in range(H)]
-    else:
-        visited = bfs(start_y, start_x, H, W, grid)
-
-    # 結果表示（到達可能なら "o", 不可なら "x"）
-    # 出力行数が多い場合、printを繰り返すよりリストに貯めて join する方が高速です
-    result = []
-    for y in range(H):
-        row_str = "".join("o" if visited[y][x] else "x" for x in range(W))
-        result.append(row_str)
-    
-    print('\n'.join(result))
-if __name__ == "__main__":
-    solve()
-
-class FenwickTree:
-    def __init__(self, n):
-        self.size = n
-        self.tree = [0] * (n + 1)
-
-    def sum(self, i):
-        """i番目までの累積和 (1-indexed)"""
-        s = 0
-        while i > 0:
-            s += self.tree[i]
-            i -= i & -i
-        return s
-
-    def add(self, i, x):
-        """i番目にxを加算 (1-indexed)"""
-        while i <= self.size:
-            self.tree[i] += x
-            i += i & -i
-
-    def lower_bound(self, w):
-        """
-        累積和が w 以上になる最小のインデックスを返す
-        （＝小さい方から w 番目の要素が、座標圧縮後の何番目にあるか）
-        """
-        if w <= 0: return 0
-        x = 0
-        r = 1
-        while r < self.size:
-            r <<= 1
-        
-        while r > 0:
-            if x + r <= self.size and self.tree[x + r] < w:
-                w -= self.tree[x + r]
-                x += r
-            r >>= 1
-        return x + 1
-    
+#==========
+#偏角ソート
+#==========   
 from functools import cmp_to_key
 # 点 p がどの領域にあるかを判定する関数
 # 上半分（y > 0 または y=0かつx>=0）を 0
@@ -159,3 +62,62 @@ def compare(p1, p2):
 # points.sort(key=cmp_to_key(compare))
 # # 結果: (1, 0) -> (1, 1) -> (-1, 1) -> (-1, -1) -> (1, -1)
 # # (X軸正方向から反時計回り)
+
+#============
+#三分探索
+#============
+def solve():
+    # 1. 入力の受け取り
+    try:
+        # 例: A, B を受け取る (問題に合わせて変更してください)
+        A = int(next(iterator))
+        B = int(next(iterator))
+        
+        pass 
+    except StopIteration:
+        return
+
+    # 2. 評価関数 f(x) の定義
+    # 下に凸（最小値を求めたい）関数を定義します
+    def f(x):
+        # ここに問題ごとの計算式を書く
+        # 例: return B * x + A / ((x + 1) ** 0.5)
+        return (x - A) ** 2 + B
+
+    # 3. 三分探索 (探索範囲の設定)
+    low = 0
+    high = 10**18  # 解が存在しうる十分大きな値
+
+    # 範囲が十分に狭くなるまでループ
+    # 整数の場合、オフ・バイ・ワン(±1の誤差)を防ぐため、
+    # 範囲が 2 以下になったらループを抜けて最後は全探索するのが安全です
+    while high - low > 2:
+        # m1: 区間の 1/3 地点, m2: 区間の 2/3 地点
+        m1 = low + (high - low) // 3
+        m2 = high - (high - low) // 3
+        
+        if f(m1) < f(m2):
+            # m1 の方が値が小さい（谷底に近い）
+            # → 谷底は「m2より左」にあるはず → 右側の範囲(m2 ~ high)を捨てる
+            high = m2
+        else:
+            # m2 の方が値が小さい（谷底に近い）、または同じ
+            # → 谷底は「m1より右」にあるはず → 左側の範囲(low ~ m1)を捨てる
+            low = m1
+
+    # 4. 残った狭い範囲 (low, low+1, high) を全探索して厳密な最小値を決定
+    ans = float('inf')
+    min_x = -1
+    
+    # int(low) から int(high) まで回す
+    for x in range(int(low), int(high) + 1):
+        val = f(x)
+        if val < ans:
+            ans = val
+            min_x = x
+            
+    print(ans)
+    # print(min_x) # 最小値をとる x が欲しい場合
+
+if __name__ == "__main__":
+    solve()
