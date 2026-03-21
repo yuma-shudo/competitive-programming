@@ -1,10 +1,9 @@
 """
-03_simulated_annealing.py
+02_hill_climbing.py
 
-貪欲法で初期解を求めた後、配達先の訪問順序を焼きなまし法で改善する解法プログラム
+貪欲法で初期解を求めた後、配達先の訪問順序を山登り法で改善する解法プログラム
 """
 
-import math
 import random
 import sys
 import time
@@ -262,9 +261,9 @@ def get_distance(route: list[Point]) -> int:
     
     return dist
 
-def solve_simulated_annealing(input_data: Input, output_data_greedy: Output) -> Output:
+def solve_hill_climbing(input_data: Input, output_data_greedy: Output) -> Output:
     """
-    配達先の訪問順序を焼きなまし法で改善する関数（この関数を実装していきます）
+    配達先の訪問順序を山登り法で改善する関数（この関数を実装していきます）
     
     Args:
         input_data (Input): 入力データ
@@ -273,7 +272,7 @@ def solve_simulated_annealing(input_data: Input, output_data_greedy: Output) -> 
     Returns:
         Output: 出力データ
     """
-    # 焼きなまし法
+    # 山登り法
     # 「ある1つの配達先を訪問する順序を、別の場所に入れ替える」操作を繰り返すことで、経路を改善する
     
     # 貪欲法で求めた解をコピー(これを初期解とする)
@@ -287,24 +286,17 @@ def solve_simulated_annealing(input_data: Input, output_data_greedy: Output) -> 
     # 乱数のシード値は固定のものにしておくと、デバッグがしやすくなります
     random.seed(42)
     
-    # 焼きなまし法の開始時刻を取得
+    # 山登り法の開始時刻を取得
     start_time = time.time()
     
     # 制限時間(1.7秒)
     # 2秒ちょうどまでやるとTLEになるので、1.9秒(pypy3で提出する場合は1.7秒)程度にしておくとよい
     time_limit = 1.7
     
-    # 開始温度と終了温度
-    start_temperature = 2e2
-    end_temperature = 1e0
-    
-    # 現在の温度
-    current_temperature = start_temperature
-    
     # 試行回数
     iteration = 0
     
-    # 焼きなまし法の本体
+    # 山登り法の本体
     while True:
         # 現在時刻を取得
         current_time = time.time()
@@ -319,42 +311,39 @@ def solve_simulated_annealing(input_data: Input, output_data_greedy: Output) -> 
         # 貪欲法で求めた解では、配達先の訪問順序は0-indexedで51番目～100番目であることに注意
         # (AtCoderオフィス、レストラン50軒、配達先50軒、AtCoderオフィスの順に並んでいる)
         
-        # 訪問先が配達先であるようなインデックスの中から i, j をランダムに選ぶ
-        i = random.randint(0, input_data.pickup_count - 1) + input_data.pickup_count + 1
-        j = random.randint(0, input_data.pickup_count - 1) + input_data.pickup_count + 1
+        # 【穴埋め】訪問先が配達先であるようなインデックスの中から i, j をランダムに選ぶ
+        # 【ヒント】i = random.randrange(0, k) と書くと、0以上k未満の乱数が得られる
+        i = random.randrange(50, 100)
+        j = random.randrange(50, 100)
+        if i == j:
+            j += 1
         
-        # i番目の訪問先をj番目に移動する操作を行う
-        point_to_move = route.pop(i)
-        route.insert(j, point_to_move)
+        # 【穴埋め】i番目の訪問先をj番目に移動する操作を行う
+        # 【ヒント】routeのi番目の要素を削除した後、削除した要素をj番目に挿入することで移動する操作になる
+        replace_destination = route.pop(i)
+        route.insert(j, replace_destination)
         
-        # 操作後の経路の距離を計算
+        # 【穴埋め】操作後の経路の距離を計算
+        # 【ヒント】get_distance(r)を使うと、経路rの距離が計算できる
         new_dist = get_distance(route)
         
-        # 【穴埋め】操作後の距離が操作前以下なら採用する
-        # 【穴埋め】操作前より悪化していても、確率で採用する(悪化度合いが小さく、温度が高いほど採用されやすい)
-        # 【ヒント】採用確率(0.0以上1.0未満)は math.exp((current_dist - new_dist) / current_temperature) で計算できる
-        # 【ヒント】random.random() と書くと、0.0以上1.0未満の乱数が得られる
-        if new_dist <= current_dist or random.random() <= math.exp((current_dist - new_dist) / current_temperature):
+        # 【穴埋め】操作後の距離が現在(操作前)の距離以下なら採用
+        # 【ヒント】現在の距離はcurrent_distに入っている
+        if new_dist <= current_dist:
+            # 進行状況を可視化するため、距離が真に小さくなったら、現在の試行回数と合計距離を標準エラー出力に出力
+            if new_dist < current_dist:
+                print(f"iteration: {iteration}, total distance: {new_dist}", file=sys.stderr)
+            # 【穴埋め】現在の距離を操作後の距離で更新
             current_dist = new_dist
         else:
-            # 採用されなかったら元に戻す
-            route.pop(j)
-            route.insert(i, point_to_move)
+            # 【穴埋め】操作前より悪化していたら元に戻す
+            # 【ヒント】「i番目の訪問先をj番目に移動する操作」を元に戻すには「j番目の訪問先をi番目に移動する操作」を行えばよい
+            replace_destination = route.pop(j)
+            route.insert(i, replace_destination)
+            pass
             
         # 試行回数のカウントを増やす
-        # 進行状況を可視化するため、一定回数ごとに現在の試行回数と合計距離を標準エラー出力に出力
         iteration += 1
-        if iteration % 100000 == 0:
-            print(f"iteration: {iteration}, total distance: {current_dist}", file=sys.stderr)
-        
-        # 現在の経過時間の割合を計算する
-        progress = (current_time - start_time) / time_limit
-        # 【穴埋め】温度の更新
-        # 【ヒント】現在の経過時間の割合に対する温度は start_temperature ** (1.0 - progress) * end_temperature ** progress で計算できる
-        current_temperature = start_temperature ** (1.0 - progress) * end_temperature ** progress
-        
-        # ここまで穴埋めして実行できるようになったら、
-        # 開始温度(start_temperature)と終了温度(end_temperature)を変えてみて、実行結果がどう変わるかを確認してみましょう
         
     # 試行回数と合計距離を標準エラー出力に出力
     print("--- Result ---", file=sys.stderr)
@@ -369,7 +358,7 @@ def main():
     
     # 問題を解く
     output_data_greedy = solve_greedy(input_data)
-    output_data = solve_simulated_annealing(input_data, output_data_greedy)
+    output_data = solve_hill_climbing(input_data, output_data_greedy)
     
     # 出力する
     output_data.print_output()
