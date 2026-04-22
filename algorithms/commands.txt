@@ -1,10 +1,10 @@
 # 1. 問題ページのURLをそのままペースト
-./new_problem.sh https://atcoder.jp/contests/adt_all_20260302_2/tasks/abc391_d
+./new_problem.sh https://atcoder.jp/contests/adt_all_20260325_1/tasks/abc369_d
 
 # 2. サンプルをin1.txt〜in3.txt / out1.txt〜out3.txtに貼る
 
 # 3. コードを書いてテスト
-./run.sh AtCoder/2026-03-03/abc391_d
+./run.sh AtCoder/2026-03-28/abc369_d
 
 # 4. ACしたらコミット
-git add . && git commit -m "AC: abc391_d" && git push
+git add . && git commit -m "AC: abc369_d" && git push
